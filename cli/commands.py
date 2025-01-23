@@ -1,5 +1,6 @@
 import typer
-from services import ItemService
+
+from .services import ItemService
 
 app = typer.Typer()
 item_service = ItemService()

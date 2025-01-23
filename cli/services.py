@@ -1,5 +1,5 @@
-from db import SessionLocal
-from db.models import Item, ItemStatus, ItemType
+from .db import SessionLocal
+from .db.models import Item, ItemStatus, ItemType
 
 
 class ItemService:

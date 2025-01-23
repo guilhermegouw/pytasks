@@ -1,5 +1,6 @@
 import typer
-from commands import app as commands_app
+
+from .commands import app as commands_app
 
 app = typer.Typer()
 app.add_typer(commands_app)
