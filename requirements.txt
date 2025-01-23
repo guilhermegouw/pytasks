@@ -8,3 +8,4 @@ mdurl==0.1.2
 shellingham==1.5.4
 Pygments==2.19.1
 click==8.1.8
+-e git+ssh://git@github.com/guilhermegouw/pytasks.git@ac506f918bb48fcfb0c87496108c23984fb447ec#egg=pytasks
