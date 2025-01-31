@@ -9,3 +9,10 @@ shellingham==1.5.4
 Pygments==2.19.1
 click==8.1.8
 -e git+ssh://git@github.com/guilhermegouw/pytasks.git@ac506f918bb48fcfb0c87496108c23984fb447ec#egg=pytasks
+-e git+ssh://git@github.com/guilhermegouw/pytasks.git@5221c136964ba3cf3e6bb0b5cdc7ab178af5a222#egg=pytasks
+alembic==1.14.1
+MarkupSafe==3.0.2
+Mako==1.3.8
+questionary==2.1.0
+wcwidth==0.2.13
+prompt_toolkit==3.0.50
