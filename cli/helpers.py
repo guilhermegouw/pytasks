@@ -4,10 +4,11 @@ from rich.panel import Panel
 from rich.table import Table
 
 from .db.models import ItemType
-from .services import ItemService
+from .services import ItemService, ProjectService
 
 console = Console()
 item_service = ItemService()
+project_service = ProjectService()
 
 
 def display_item(item: dict):
@@ -66,17 +67,54 @@ def handle_non_actionable(item: dict):
 
 def handle_actionable(item: dict):
     """Handle actionable items with questionary selection."""
-    choices = ["Quick Task (2 min)", "Delegate it", "Defer it"]
-
-    choice = questionary.select(
-        "What would you like to do with this item?", choices=choices
+    is_quick = questionary.confirm(
+        "Will it take less than 2 minutes?", default=False
     ).ask()
-
-    if choice == "Quick Task (2 min)":
+    if is_quick:
         item_service.update_item_type(item["id"], ItemType.QUICK_TASK)
-    elif choice == "Delegate it":
-        delegated_to = questionary.text("Who to delegate to?").ask()
+        return
+
+    will_delegate = questionary.confirm(
+        "Do you want to delegate it?", default=False
+    ).ask()
+    if will_delegate:
+        delegated_to = questionary.text("Who should do this?").ask()
+        follow_up_date = (
+            questionary.text(
+                "When should you follow up? (YYYY-MM-DD or press enter to skip)"
+            ).ask()
+            if delegated_to
+            else None
+        )
+
         item_service.update_item_type(item["id"], ItemType.NEXT_ACTION)
-        item_service.update_item_delegation(item["id"], delegated_to)
-    else:  # Defer it
-        item_service.update_item_type(item["id"], ItemType.NEXT_ACTION)
+        item_service.update_item_delegation(
+            item["id"], delegated_to, follow_up_date
+        )
+        return
+    needs_multiple_actions = questionary.confirm(
+        "Will this require multiple actions?", default=False
+    ).ask()
+    if needs_multiple_actions:
+        project_id = project_service.create_project(
+            item["title"], item["description"]
+        )
+        want_to_add_action = questionary.confirm(
+            "Would you like to add a next action now?", default=False
+        ).ask()
+        if want_to_add_action:
+            next_action_title = questionary.text(
+                "What's the first next action for this project?"
+            ).ask()
+            next_action_description = questionary.text(
+                "Any etails for this action? (optional)"
+            ).ask()
+
+            project_service.add_next_action(
+                project_id,
+                next_action_title,
+                next_action_description if next_action_description else None,
+            )
+        item_service.update_item_type(item["id"], ItemType.TRASH)
+        return
+    item_service.update_item_type(item["id"], ItemType.NEXT_ACTION)

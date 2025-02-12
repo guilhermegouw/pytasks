@@ -7,3 +7,26 @@ version = "0.1.0"
 
 [project.scripts]
 pytasks = "cli.app:app"
+
+[tool.poetry.dependencies]
+python = ">=3.9"
+greenlet = "3.1.1"
+typing-extensions = "4.12.2"
+sqlalchemy = "2.0.37"
+typer = "0.15.1"
+rich = "13.9.4"
+markdown-it-py = "3.0.0"
+mdurl = "0.1.2"
+shellingham = "1.5.4"
+pygments = "2.19.1"
+click = "8.1.8"
+alembic = "1.14.1"
+markupsafe = "3.0.2"
+mako = "1.3.8"
+questionary = "2.1.0"
+wcwidth = "0.2.13"
+prompt-toolkit = "3.0.50"
+
+[tool.poetry]
+package-mode = false
+

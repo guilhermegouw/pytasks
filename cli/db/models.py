@@ -3,8 +3,13 @@ from datetime import datetime
 from typing import Optional
 
 from sqlalchemy import DateTime, ForeignKey
-from sqlalchemy.orm import (DeclarativeMeta, Mapped, declarative_base,
-                            mapped_column)
+from sqlalchemy.orm import (
+    DeclarativeMeta,
+    Mapped,
+    declarative_base,
+    mapped_column,
+    relationship,
+)
 from sqlalchemy.sql import func
 
 Base: DeclarativeMeta = declarative_base()
@@ -31,8 +36,12 @@ class Item(Base):
     is_done: Mapped[bool] = mapped_column(default=False)
     delegated_to: Mapped[Optional[str]] = mapped_column(nullable=True)
     due_date: Mapped[Optional[datetime]] = mapped_column(nullable=True)
+    follow_up_date: Mapped[Optional[datetime]] = mapped_column(nullable=True)
     project_id: Mapped[Optional[int]] = mapped_column(
-        ForeignKey("items.id"), nullable=True
+        ForeignKey("projects.id"), nullable=True
+    )
+    project: Mapped[Optional["Project"]] = relationship(
+        "Project", back_populates="next_actions"
     )
 
     def __repr__(self) -> str:
@@ -41,4 +50,26 @@ class Item(Base):
             f"title={self.title}, "
             f"item_type={self.item_type}, "
             f"is_done={self.is_done})>"
+        )
+
+
+class Project(Base):
+    __tablename__ = "projects"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    title: Mapped[str] = mapped_column()
+    description: Mapped[str] = mapped_column(nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    is_active: Mapped[bool] = mapped_column(default=True)
+
+    next_actions: Mapped[list["Item"]] = relationship(
+        "Item", back_populates="project", cascade="all, delete-orphan"
+    )
+
+    def __repr__(self) -> str:
+        return (
+            f"<Project(id={self.id}, "
+            f"title={self.title}, "
+            f"is_active={self.is_active})>"
         )

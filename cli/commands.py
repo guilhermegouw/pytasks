@@ -4,10 +4,11 @@ from rich.table import Table
 
 from .db.models import ItemType
 from .helpers import process_item
-from .services import ItemService
+from .services import ItemService, ProjectService
 
 app = typer.Typer()
 item_service = ItemService()
+project_service = ProjectService()
 
 
 @app.command()
@@ -53,9 +54,11 @@ def list(
         "inbox": (ItemType.UNDEFINED, "Unclarified items"),
         "quick": (ItemType.QUICK_TASK, "Quick tasks (2 minutes)"),
         "next": (ItemType.NEXT_ACTION, "Next actions"),
+        "waiting": (ItemType.NEXT_ACTION, "Waiting For Others"),
         "reference": (ItemType.REFERENCE, "Reference materials"),
         "someday": (ItemType.SOMEDAY, "Someday/Maybe items"),
         "trash": (ItemType.TRASH, "Items to delete"),
+        "projects": (None, "Active Projects"),
     }
 
     if context is None:
@@ -69,7 +72,37 @@ def list(
         raise typer.Exit(1)
 
     item_type, description = contexts[context.lower()]
-    items = item_service.get_items_by_type(item_type)
+
+    if context.lower() == "projects":
+        projects = project_service.get_active_projects()
+        if not projects:
+            typer.echo("No active projects found")
+            return
+
+        table = Table(title=description)
+        table.add_column("ID", justify="right", style="cyan")
+        table.add_column("Title", style="white")
+        table.add_column("Description", style="white")
+        table.add_column("Next Actions", style="green")
+
+        for project in projects:
+            next_actions = [
+                f"• {action['title']}" for action in project["next_actions"]
+            ]
+            table.add_row(
+                str(project["id"]),
+                project["title"],
+                project["description"] or "",
+                "\n".join(next_actions) if next_actions else "No actions",
+            )
+
+        console = Console()
+        console.print(table)
+        return
+    only_delegated = context.lower() == "waiting"
+    items = item_service.get_items_by_type(
+        item_type, only_delegated=only_delegated
+    )
 
     if not items:
         typer.echo(f"No items found in {description.lower()}")
@@ -79,8 +112,11 @@ def list(
     table.add_column("ID", justify="right", style="cyan")
     table.add_column("Title", style="white")
     table.add_column("Description", style="white")
-    if item_type == ItemType.NEXT_ACTION:
+    if context.lower() == "waiting":
         table.add_column("Delegated To", style="white")
+        table.add_column("Follow up date", style="white")
+    if context.lower() in ["next", "waiting"]:
+        table.add_column("Project", style="yellow")
 
     for item in items:
         row = [
@@ -88,8 +124,16 @@ def list(
             str(item["title"]),
             str(item["description"]) or "",
         ]
-        if item_type == ItemType.NEXT_ACTION:
+        if context.lower() == "waiting":
             row.append(str(item["delegated_to"]) or "")
+            row.append(str(item["follow_up_date"]) or "")
+        if context.lower() in ["next", "waiting"]:
+            project_info = (
+                f"#{item['project']['id']} {item['project']['title']}"
+                if item["project"]
+                else ""
+            )
+            row.append(project_info)
         table.add_row(*row)
 
     console = Console()
