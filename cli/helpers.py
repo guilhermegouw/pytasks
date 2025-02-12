@@ -11,6 +11,33 @@ item_service = ItemService()
 project_service = ProjectService()
 
 
+def interactively_collect():
+    """Interactive mode for collecting an item into the inbox."""
+    while True:
+        title = questionary.text("Enter the title").ask()
+
+        if not title.strip():
+            console.print("\n[!] Title is required.", style="bold red")
+            choice = questionary.select(
+                "Do you want to:",
+                choices=["Try again", "Quit"],
+            ).ask()
+
+            if choice == "Quit":
+                console.print("[✔] Collect abandoned.", style="bold yellow")
+                return
+            else:
+                continue
+
+        description = questionary.text(
+            "Enter the description (optional)"
+        ).ask()
+
+        item_service.capture_item(title, description)
+        console.print(f'[✔] Collected: "{title}"', style="bold green")
+        return
+
+
 def display_item(item: dict):
     """Display the current item being processed."""
     table = Table(show_header=False, box=None)
@@ -81,7 +108,8 @@ def handle_actionable(item: dict):
         delegated_to = questionary.text("Who should do this?").ask()
         follow_up_date = (
             questionary.text(
-                "When should you follow up? (YYYY-MM-DD or press enter to skip)"
+                "When should you follow up? "
+                + "(YYYY-MM-DD or press enter to skip)"
             ).ask()
             if delegated_to
             else None

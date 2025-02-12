@@ -28,7 +28,7 @@ class ItemService:
 
     def capture_item(self, title: str, description: str = ""):
         """
-        Capture a new item in the database (inbox).
+        Collect a new item in the database (inbox).
         """
 
         with self.get_session() as session:
